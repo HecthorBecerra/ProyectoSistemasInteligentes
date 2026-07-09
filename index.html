@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL · IDS — Aprendizaje por Refuerzo para detección de intrusiones</title>
+<meta name="description" content="Recurso educativo interactivo: un agente de Q-Learning aprende a detectar intrusiones de red en tu navegador. Teoría, fórmula manipulable, juego manual y simulación en vivo.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23080b12'/><rect x='16' y='16' width='68' height='68' rx='12' fill='none' stroke='%23f6a723' stroke-width='7'/><circle cx='50' cy='50' r='13' fill='%23f6a723'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Archivo:wght@400;500;600&family=Martian+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- capas ambientales -->
+  <div class="fondo-grid"></div>
+  <div class="fondo-scan"></div>
+  <div class="fondo-glow"></div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="#introduccion" class="nav__logo">
+      <span class="nav__mark"><span></span></span>
+      <span class="nav__wordmark">RL·<span class="c-ambar">IDS</span></span>
+    </a>
+    <div class="nav__links">
+      <a href="#conceptos">CONCEPTOS</a>
+      <a href="#aprendizaje">APRENDIZAJE</a>
+      <a href="#algoritmo">ALGORITMO</a>
+      <a href="#caso-practico">CASO</a>
+      <a href="#simulacion" class="cta">SIMULACIÓN ▸</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header id="introduccion" class="hero">
+    <canvas id="hero-particulas" class="hero__canvas"></canvas>
+    <div class="hero__tick hero__tick--l"></div>
+    <div class="hero__tick hero__tick--r"></div>
+    <div class="hero__inner">
+      <div class="badge"><span></span> DETECCIÓN DE INTRUSIONES · Q-LEARNING EN VIVO</div>
+      <h1>Un agente que <em>aprende</em> a defender la red.</h1>
+      <p class="hero__sub">Aprendizaje por Refuerzo explicado y <strong>demostrado</strong>: un agente de Q-Learning entrena en tu navegador para clasificar conexiones como normales o anómalas — decidiendo, equivocándose y mejorando en tiempo real.</p>
+      <div class="hero__cta">
+        <a href="#simulacion" class="btn-hero btn-hero--primary">▶ LANZAR SIMULACIÓN</a>
+        <a href="#conceptos" class="btn-hero btn-hero--ghost">↓ ENTENDER LA TEORÍA</a>
+      </div>
+      <div class="hero__nums">
+        <div><b>8</b><span>ESTADOS</span></div>
+        <div><b>2</b><span>ACCIONES</span></div>
+        <div><b>0</b><span>BACKEND</span></div>
+        <div><b class="verde">100%</b><span>EN TU NAVEGADOR</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONCEPTOS -->
+  <section id="conceptos" class="contenido">
+    <div class="seccion-nro">01 / FUNDAMENTOS</div>
+    <h2 class="h2">El bucle agente–entorno</h2>
+    <p class="intro-txt">Todo el Aprendizaje por Refuerzo gira sobre un ciclo: el <strong class="c-ambar">agente</strong> observa un estado, ejecuta una acción, y el <strong class="c-verde">entorno</strong> responde con un nuevo estado y una recompensa. Sin datasets etiquetados: solo prueba, error y recompensa.</p>
+
+    <div class="diagrama">
+      <div class="nodo nodo--agente">
+        <div class="nodo__etq">EL CEREBRO</div>
+        <div class="nodo__nombre">AGENTE</div>
+      </div>
+      <div class="flujo">
+        <div class="flujo__linea flujo__linea--top"></div>
+        <div class="flujo__etq flujo__etq--top">acción →</div>
+        <div class="flujo__dot flujo__dot--top"></div>
+        <div class="flujo__linea flujo__linea--bot"></div>
+        <div class="flujo__etq flujo__etq--bot">← estado + recompensa</div>
+        <div class="flujo__dot flujo__dot--bot"></div>
+      </div>
+      <div class="nodo nodo--entorno">
+        <div class="nodo__etq">EL MUNDO</div>
+        <div class="nodo__nombre">ENTORNO</div>
+      </div>
+    </div>
+
+    <div class="grid-cards">
+      <div class="card"><div class="card__etq">ESTADO · s</div><div class="card__tit">Lo que el agente ve</div><p>Un resumen de la situación. Aquí: 3 rasgos de la conexión → uno de 8 estados posibles.</p></div>
+      <div class="card"><div class="card__etq">ACCIÓN · a</div><div class="card__tit">Lo que decide hacer</div><p>Aquí solo dos opciones: <strong class="c-verde">permitir</strong> la conexión o <strong class="c-coral">bloquearla</strong>.</p></div>
+      <div class="card"><div class="card__etq">RECOMPENSA · r</div><div class="card__tit">La señal de calidad</div><p>Un número: positivo si acertó, negativo si falló. Dejar pasar una intrusión es lo más caro.</p></div>
+      <div class="card"><div class="card__etq">POLÍTICA · π</div><div class="card__tit">Su estrategia</div><p>La regla aprendida: para cada estado, qué acción conviene. Es lo que emerge del entrenamiento.</p></div>
+    </div>
+  </section>
+
+  <!-- APRENDIZAJE -->
+  <section id="aprendizaje" class="contenido">
+    <div class="seccion-nro">02 / EL MECANISMO</div>
+    <h2 class="h2">Aprender por recompensas</h2>
+    <p class="intro-txt">Nadie le dice al agente la respuesta correcta. Solo prueba acciones y ajusta su comportamiento según la recompensa que recibe — repetido miles de veces, esto basta para descubrir una buena política.</p>
+    <div class="grid-cards">
+      <div class="paso"><div class="paso__n">01</div><div class="paso__tit">Explorar</div><p>Al principio prueba casi al azar (ε alto). Necesita datos: no puede saber qué funciona sin arriesgarse.</p></div>
+      <div class="paso"><div class="paso__n">02</div><div class="paso__tit">Evaluar</div><p>Cada recompensa actualiza su estimación del valor de esa acción en ese estado — la tabla Q.</p></div>
+      <div class="paso"><div class="paso__n verde">03</div><div class="paso__tit">Explotar</div><p>A medida que confía en lo aprendido (ε baja), elige cada vez más la mejor acción conocida.</p></div>
+    </div>
+  </section>
+
+  <!-- ALGORITMO -->
+  <section id="algoritmo" class="contenido">
+    <div class="seccion-nro">03 / LA FÓRMULA</div>
+    <h2 class="h2">Q-Learning en una línea</h2>
+    <p class="intro-txt">El corazón del algoritmo: mover la estimación actual un poco hacia la recompensa observada. Una versión de un solo paso, ideal para este problema sin estados futuros encadenados.</p>
+    <div class="formula">
+      <div class="formula__eq">
+        <span class="c-ambar">Q(s,a)</span><span class="c-gris">←</span><span class="c-ambar">Q(s,a)</span><span class="c-gris">+</span><span class="c-violeta">α</span><span class="c-gris">·</span><span class="c-gris">(</span><span class="c-verde">r</span><span class="c-gris">−</span><span class="c-ambar">Q(s,a)</span><span class="c-gris">)</span>
+      </div>
+      <div class="formula__leyenda">
+        <div><span class="c-ambar">■ Q(s,a)</span><p>Valor estimado de tomar la acción a en el estado s.</p></div>
+        <div><span class="c-violeta">■ α</span><p>Tasa de aprendizaje: cuánto pesa la nueva experiencia.</p></div>
+        <div><span class="c-verde">■ r</span><p>Recompensa recibida tras actuar en el entorno.</p></div>
+        <div><span class="c-gris">■ (r − Q)</span><p>El error: la sorpresa que corrige la estimación.</p></div>
+      </div>
+    </div>
+
+    <!-- laboratorio interactivo de la fórmula -->
+    <div class="flab">
+      <div class="flab__cab">◆ LABORATORIO — MUÉVELA TÚ MISMO</div>
+      <div class="flab__ctrl">
+        <div class="flab__alpha">
+          <span>α</span>
+          <input id="flab-alpha" type="range" min="0.05" max="1" step="0.05" value="0.15">
+          <b id="flab-alpha-val">0.15</b>
+        </div>
+        <div class="flab__r">
+          <span>RECOMPENSA r:</span>
+          <button class="flab__rbtn flab__rbtn--sel" data-r="3">+3</button>
+          <button class="flab__rbtn" data-r="1">+1</button>
+          <button class="flab__rbtn" data-r="-1">−1</button>
+          <button class="flab__rbtn" data-r="-10">−10</button>
+        </div>
+      </div>
+      <div class="flab__linea">
+        <div class="flab__track">
+          <div id="flab-cero" class="flab__cero"></div>
+          <div id="flab-marker-r" class="flab__marker flab__marker--r">r = +3</div>
+          <div id="flab-marker-q" class="flab__marker flab__marker--q"></div>
+        </div>
+        <div class="flab__escala"><span>−10</span><span>+3</span></div>
+      </div>
+      <div id="flab-calc" class="flab__calc"></div>
+      <div class="flab__botones">
+        <button id="flab-paso" class="btn btn--ambar btn--sm">APLICAR UN PASO ▸</button>
+        <button id="flab-reset" class="btn btn--sm">↻ REINICIAR Q</button>
+      </div>
+      <p class="flab__nota">Cada paso mueve Q una fracción α del error hacia r. Con α = 1, Q salta directo a r y <em>olvida</em> todo lo anterior — fatal cuando hay ruido. Con α pequeño converge despacio pero estable: por eso el agente de esta página entrena con α = 0.02.</p>
+    </div>
+  </section>
+
+  <!-- CASO PRÁCTICO -->
+  <section id="caso-practico" class="contenido">
+    <div class="seccion-nro">04 / EL PROBLEMA</div>
+    <h2 class="h2">Del paquete de red al estado</h2>
+    <div class="caso">
+      <div class="caso__panel">
+        <div class="caso__cab">CADA CONEXIÓN → 3 RASGOS → 1 DE 8 ESTADOS</div>
+        <div style="display:flex; flex-direction:column; gap:14px; margin-top:20px;">
+          <div class="rasgo"><span class="rasgo__ico">⏱</span><div><div class="rasgo__tit">Duración</div><div class="rasgo__sub">¿La sesión fue larga o corta?</div></div></div>
+          <div class="rasgo"><span class="rasgo__ico">▦</span><div><div class="rasgo__tit">Bytes transferidos</div><div class="rasgo__sub">¿Movió mucho o poco tráfico?</div></div></div>
+          <div class="rasgo"><span class="rasgo__ico">✕</span><div><div class="rasgo__tit">Fallos de autenticación</div><div class="rasgo__sub">¿Muchos intentos fallidos de login?</div></div></div>
+        </div>
+        <p class="caso__nota">Cada rasgo se resume en alto/bajo → 2³ = <strong>8 estados</strong>. Es una discretización deliberadamente simple para que la tabla Q sea legible.</p>
+      </div>
+      <div class="caso__panel">
+        <div class="caso__cab">MATRIZ DE RECOMPENSA · ASIMÉTRICA</div>
+        <div class="matriz">
+          <div></div>
+          <div class="matriz__col c-verde">NORMAL</div>
+          <div class="matriz__col c-coral">ANÓMALA</div>
+          <div class="matriz__row">PERMITIR</div>
+          <div class="matriz__celda celda--verde">+1</div>
+          <div class="matriz__celda celda--coral">−10</div>
+          <div class="matriz__row">BLOQUEAR</div>
+          <div class="matriz__celda celda--gris">−1</div>
+          <div class="matriz__celda celda--verde">+3</div>
+        </div>
+        <p class="caso__nota">El <strong class="coral">−10</strong> lo cambia todo: dejar pasar una intrusión cuesta muchísimo más que un bloqueo equivocado. El agente debe aprender a ser prudente.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIMULACIÓN -->
+  <section id="simulacion" class="contenido sim">
+    <div class="seccion-nro">05 / EN VIVO</div>
+    <h2 class="h2">Consola de entrenamiento</h2>
+    <p class="intro-txt">Primero juega tú: clasifica 10 conexiones. Luego lanza al agente y compara tu criterio contra lo que descubre por su cuenta.</p>
+
+    <!-- JUEGO MANUAL -->
+    <div class="manual">
+      <div class="manual__cab">
+        <div class="manual__tit">◆ JUEGA TÚ PRIMERO</div>
+        <div class="manual__estado">RONDA <span class="ambar" id="manual-ronda">0</span> / 10 · ACIERTOS <span class="verde" id="manual-puntaje">0</span></div>
+      </div>
+
+      <div id="manual-intro" class="manual__centro">
+        <p>Verás 3 rasgos de una conexión. Decide si la dejas pasar o la bloqueas. Al final comparas tu precisión con la del agente.</p>
+        <button id="btn-manual-iniciar" class="btn btn--ambar">EMPEZAR RONDAS ▸</button>
+      </div>
+
+      <div id="manual-jugando" class="manual__campo" style="display:none;">
+        <div id="manual-bars" class="manual__filas"></div>
+        <div class="manual__acciones">
+          <button id="btn-permitir" class="btn btn--verde">✓ PERMITIR</button>
+          <button id="btn-bloquear" class="btn btn--coral">✕ BLOQUEAR</button>
+        </div>
+        <div id="manual-feedback" class="manual__feedback"></div>
+      </div>
+
+      <div id="manual-hecho" class="manual__centro" style="display:none;">
+        <div class="caso__cab">TU RESULTADO</div>
+        <div class="manual__final"><span id="manual-puntaje-final">0</span><span>/10</span></div>
+        <p id="manual-cierre"></p>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <button id="btn-manual-reintentar" class="btn btn--sm">↻ REINTENTAR</button>
+          <a href="#panel-agente" class="btn btn--ambar btn--sm">AHORA ENTRENA AL AGENTE ▾</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERSUS: humano vs agente -->
+    <div id="versus" class="versus">
+      <div class="versus__lado">
+        <div class="versus__etq">TU CRITERIO</div>
+        <div id="versus-humano" class="versus__val c-ambar">—</div>
+        <div id="versus-humano-sub" class="versus__sub">juega las 10 rondas de arriba</div>
+      </div>
+      <div class="versus__vs">VS</div>
+      <div class="versus__lado">
+        <div class="versus__etq">AGENTE Q-LEARNING</div>
+        <div id="versus-agente" class="versus__val c-verde">—</div>
+        <div id="versus-agente-sub" class="versus__sub">entrena al menos 150 episodios</div>
+      </div>
+      <div id="versus-veredicto" class="versus__veredicto">El duelo se resuelve cuando ambos marcadores estén en juego.</div>
+    </div>
+
+    <!-- PANEL AGENTE -->
+    <div id="panel-agente" class="panel">
+      <div class="toolbar">
+        <span id="agente-luz" class="toolbar__luz"></span>
+        <span class="toolbar__estado">AGENTE · <span id="agente-estado">LISTO</span></span>
+        <div class="toolbar__spacer"></div>
+        <button id="btn-iniciar" class="tbtn tbtn--go">▶ INICIAR</button>
+        <button id="btn-pausar" class="tbtn">❚❚ PAUSAR</button>
+        <button id="btn-paso" class="tbtn">▸ PASO</button>
+        <button id="btn-reiniciar" class="tbtn tbtn--danger">↻ REINICIAR</button>
+        <div class="vel"><span>VEL</span><input id="vel" type="range" min="1" max="10" step="1" value="6"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat__etq">EPISODIOS</div><div id="stat-episodios" class="stat__val">0</div></div>
+        <div class="stat"><div class="stat__etq">RECOMPENSA ∑</div><div id="stat-recompensa" class="stat__val">+0</div></div>
+        <div class="stat"><div class="stat__etq">EPSILON · ε</div><div id="stat-epsilon" class="stat__val c-violeta">1.00</div></div>
+        <div class="stat"><div class="stat__etq">PRECISIÓN</div><div id="stat-precision" class="stat__val c-verde">—</div></div>
+        <div class="stat"><div class="stat__etq">FALSOS POSITIVOS</div><div id="stat-fp" class="stat__val">0</div><div class="stat__sub">bloqueos innecesarios · coste −1</div></div>
+        <div class="stat"><div class="stat__etq">FALSOS NEGATIVOS</div><div id="stat-fn" class="stat__val c-coral">0</div><div class="stat__sub">intrusiones que pasaron · coste −10</div></div>
+        <div class="stat"><div class="stat__etq">ÚLTIMA DECISIÓN</div><div id="stat-ultima" class="stat__val--sm">—</div><div id="stat-ultima-tipo" class="stat__sub">—</div></div>
+      </div>
+
+      <div class="panel__medio">
+        <div class="grafico-wrap">
+          <div class="grafico-cab">
+            <span>RECOMPENSA PROMEDIO (MÓVIL)</span>
+            <button id="btn-tactica" class="btn-tactica" title="Invierte qué combinación de rasgos se considera anómala">⚡ CAMBIAR TÁCTICA · NORMAL</button>
+          </div>
+          <canvas id="grafico-recompensa"></canvas>
+        </div>
+        <div class="bitacora-wrap">
+          <div class="bitacora-cab">◈ BITÁCORA DE DECISIONES</div>
+          <div id="bitacora" class="bitacora"></div>
+          <div class="bitacora__prompt">agente@ids:~$ <span>▊</span></div>
+        </div>
+      </div>
+
+      <div class="politica-wrap">
+        <div class="tablaq-cab">POLÍTICA π · MEJOR ACCIÓN POR ESTADO <span>(la estrategia que emerge de la tabla Q)</span></div>
+        <div id="mapa-politica" class="politica"></div>
+      </div>
+
+      <div class="tablaq-wrap">
+        <div class="tablaq-cab">TABLA Q · VALOR APRENDIDO POR ESTADO <span>(barra ámbar = mejor acción)</span></div>
+        <div id="tabla-q" class="tablaq"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONCLUSIONES -->
+  <section id="conclusiones" class="contenido">
+    <div class="seccion-nro">06 / CIERRE</div>
+    <h2 class="h2">Lo que deja el experimento</h2>
+    <div class="concl">
+      <div class="concl__item concl__item--a"><div class="concl__tit">Aprende sin respuestas</div><p>El agente nunca recibe la etiqueta correcta — solo recompensas. Aun así converge a una política sensata guiado por la matriz asimétrica.</p></div>
+      <div class="concl__item concl__item--v"><div class="concl__tit">Explora, luego explota</div><p>El balance ε-greedy es visible: al inicio decide al azar, y a medida que ε cae, confía en la tabla Q.</p></div>
+      <div class="concl__item concl__item--c"><div class="concl__tit">El mundo cambia</div><p>Al invertir la táctica del atacante, la política aprendida deja de servir — y el agente debe re-explorar. Es el problema de la no estacionariedad.</p></div>
+    </div>
+
+    <!-- limitaciones -->
+    <div class="limites">
+      <div class="limites__cab">LIMITACIONES · LO QUE ESTE PROTOTIPO NO RESUELVE</div>
+      <div class="limites__grid">
+        <div class="limite"><span class="limite__n">L1</span><div><b>La tabla Q no escala</b>Tres rasgos binarios caben en 8 filas; el tráfico real tiene decenas de rasgos continuos y la tabla explota combinatoriamente. La salida moderna es aproximar Q con una red neuronal (Deep Q-Networks).</div></div>
+        <div class="limite"><span class="limite__n">L2</span><div><b>Discretizar pierde información</b>Un 59% y un 61% de bytes caen en estados distintos siendo casi idénticos. El umbral duro alto/bajo hace legible la tabla, pero borra matices que un detector real necesita.</div></div>
+        <div class="limite"><span class="limite__n">L3</span><div><b>El ruido pone un techo</b>Con un 10% de conexiones que rompen la regla, ni la política óptima supera ~90% de precisión. Como en un IDS real: siempre hay un compromiso entre falsos positivos y falsos negativos.</div></div>
+        <div class="limite"><span class="limite__n">L4</span><div><b>Recompensa inmediata, no secuencial</b>Aquí cada conexión es un episodio independiente, sin factor de descuento γ. Un ataque real es una <em>secuencia</em> de pasos — modelarlo exige la versión completa de Q-Learning con estados encadenados.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REFERENCIAS + FOOTER -->
+  <footer id="referencias" class="footer">
+    <div class="footer__row">
+      <div>
+        <div class="footer__cab">REFERENCIAS</div>
+        <ul>
+          <li>Sutton, R. &amp; Barto, A. — <em>Reinforcement Learning: An Introduction</em> (2ª ed.)</li>
+          <li>Watkins, C. — <em>Q-Learning</em> (Machine Learning, 1992)</li>
+          <li>Caso: detección de intrusiones en redes computacionales</li>
+        </ul>
+      </div>
+      <div class="footer__meta">
+        <div class="ambar">RL·IDS</div>
+        <div style="margin-top:6px;">SIN BACKEND · SIN BUILD</div>
+        <div style="margin-top:2px;">TODO EN EL NAVEGADOR</div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
