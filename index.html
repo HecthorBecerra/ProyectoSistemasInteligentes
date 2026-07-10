@@ -164,6 +164,7 @@
           <div class="rasgo"><span class="rasgo__ico">✕</span><div><div class="rasgo__tit">Fallos de autenticación</div><div class="rasgo__sub">¿Muchos intentos fallidos de login?</div></div></div>
         </div>
         <p class="caso__nota">Cada rasgo se resume en alto/bajo → 2³ = <strong>8 estados</strong>. Es una discretización deliberadamente simple para que la tabla Q sea legible.</p>
+        <p class="caso__nota">El entorno etiqueta una conexión como <strong class="coral">anómala</strong> cuando ocurren a la vez <strong>bytes muchos</strong> y <strong>fallos de autenticación altos</strong> — el resto son normales. Ni el agente ni tú ven esta regla directamente: solo se revela indirectamente en la recompensa recibida, y un 10% de ruido aleatorio impide que sea perfectamente separable.</p>
       </div>
       <div class="caso__panel">
         <div class="caso__cab">MATRIZ DE RECOMPENSA · ASIMÉTRICA</div>
