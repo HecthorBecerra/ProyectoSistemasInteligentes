@@ -32,10 +32,6 @@ python -m http.server 8000
 
 Luego abrir `http://localhost:8000` en el navegador.
 
-**Opción 3 — GitHub Pages:**
-Activar GitHub Pages en la configuración del repositorio (rama `main`,
-carpeta raíz `/`) y acceder a la URL que genera GitHub.
-
 ## Estructura del proyecto
 
 ```
