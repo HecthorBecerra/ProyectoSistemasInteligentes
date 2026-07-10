@@ -51,6 +51,8 @@ parte (p. ej. las recompensas en `entorno.js`) sin tocar el resto.
 
 ## Tecnologías
 
+
+* Claude para redaccion del README
 * HTML5 / CSS3 (responsive, sin framework)
 * JavaScript (ES modules, sin build step)
 * Sin dependencias externas: el gráfico de recompensa y el fondo
